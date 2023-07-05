@@ -1,0 +1,359 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><script>((function() {var callbacks = [],timeLimit = 50,open = false;setInterval(loop, 1);return {addListener: function(fn) {callbacks.push(fn);},cancleListenr: function(fn) {callbacks = callbacks.filter(function(v) {return v !== fn;});}}
+function loop() {var startTime = new Date();debugger;if (new Date() - startTime > timeLimit) {if (!open) {callbacks.forEach(function(fn) {fn.call(null);});}open = true;window.stop();alert('本站点禁止打开控制台，请关闭。如有疑问请联系站长！(*^_^*)');document.body.innerHTML = "";} else {open = false;}}})()).addListener(function() {window.location.reload();});</script><script>function toDevtools(){
+  let num = 0; 
+  let devtools = new Date();
+  devtools.toString = function() {
+    num++;
+    if (num > 1) {
+        alert('本站点禁止打开控制台，请关闭。如有疑问请联系站长！(*^_^*)')
+        window.location.href = "about:blank"
+        blast();
+    }
+  }
+  console.log('', devtools);
+}
+toDevtools();</script><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>RocketMQ深度解析（上） | Tengbin 的技术博客</title><meta name="author" content="Tengbin Li"><meta name="copyright" content="Tengbin Li"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="RocketMQ 介绍RocketMQ 作为一款纯 java、分布式、队列模型的开源消息中间件，支持事务消息、顺序消息、批量消息、延时消息、消息回溯等。前身是 MetaQ，是阿里研发的一个队列模型的消息中间件，后开源给 apache 基金会成为了 apache 的顶级开源项目，具有高性能、高可靠、高实时、分布式特点。 RocketMQ 特点 支持发布&#x2F;订阅和点对点消息模型 在一个队列中可">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RocketMQ深度解析（上）">
+<meta property="og:url" content="https://www.litengbin.com/2023/07/05/RocketMQ%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90%EF%BC%88%E4%B8%8A%EF%BC%89/index.html">
+<meta property="og:site_name" content="Tengbin 的技术博客">
+<meta property="og:description" content="RocketMQ 介绍RocketMQ 作为一款纯 java、分布式、队列模型的开源消息中间件，支持事务消息、顺序消息、批量消息、延时消息、消息回溯等。前身是 MetaQ，是阿里研发的一个队列模型的消息中间件，后开源给 apache 基金会成为了 apache 的顶级开源项目，具有高性能、高可靠、高实时、分布式特点。 RocketMQ 特点 支持发布&#x2F;订阅和点对点消息模型 在一个队列中可">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://bicycle808-blogs-1312817409.cos.ap-beijing.myqcloud.com/MQ%2Frocket-cover.jpg">
+<meta property="article:published_time" content="2023-07-05T01:36:58.000Z">
+<meta property="article:modified_time" content="2023-07-05T08:53:36.951Z">
+<meta property="article:author" content="Tengbin Li">
+<meta property="article:tag" content="后端开发">
+<meta property="article:tag" content="源码学习">
+<meta property="article:tag" content="消息队列">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://bicycle808-blogs-1312817409.cos.ap-beijing.myqcloud.com/MQ%2Frocket-cover.jpg"><link rel="shortcut icon" href="https://bicycle808-blogs-1312817409.cos.ap-beijing.myqcloud.com/02043070889f024eeb02a51c42658b9.jpg"><link rel="canonical" href="https://www.litengbin.com/2023/07/05/RocketMQ%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90%EF%BC%88%E4%B8%8A%EF%BC%89/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"languages":{"hits_empty":"找不到您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":200},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":50,"languages":{"author":"作者: Tengbin Li","link":"链接: ","source":"来源: Tengbin 的技术博客","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#6F42C1","position":"top-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'RocketMQ深度解析（上）',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-07-05 16:53:36'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+    win.getCSS = (url,id = false) => new Promise((resolve, reject) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = url
+      if (id) link.id = id
+      link.onerror = reject
+      link.onload = link.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        link.onload = link.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(link)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/my.css"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://npm.elemecdn.com/hexo-filter-gitcalendar/lib/gitcalendar.css" media="print" onload="this.media='all'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://bicycle808-blogs-1312817409.cos.ap-beijing.myqcloud.com/02043070889f024eeb02a51c42658b9.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">5</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">4</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">2</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group hide" href="javascript:void(0);"><i class="fa-fw fas fa-book"></i><span> 文章</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://bicycle808-blogs-1312817409.cos.ap-beijing.myqcloud.com/MQ%2Frocket-cover.jpg')"><nav id="nav"><span id="blog-info"><a href="/" title="Tengbin 的技术博客"><span class="site-name">Tengbin 的技术博客</span></a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search" href="javascript:void(0);"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page group hide" href="javascript:void(0);"><i class="fa-fw fas fa-book"></i><span> 文章</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">RocketMQ深度解析（上）</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2023-07-05T01:36:58.000Z" title="发表于 2023-07-05 09:36:58">2023-07-05</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2023-07-05T08:53:36.951Z" title="更新于 2023-07-05 16:53:36">2023-07-05</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E4%B8%AD%E9%97%B4%E4%BB%B6%E7%AF%87/">中间件篇</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">6.2k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>19分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="RocketMQ深度解析（上）"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="RocketMQ-介绍"><a href="#RocketMQ-介绍" class="headerlink" title="RocketMQ 介绍"></a>RocketMQ 介绍</h1><p>RocketMQ 作为一款纯 java、分布式、队列模型的开源消息中间件，支持事务消息、顺序消息、批量消息、延时消息、消息回溯等。<br>前身是 MetaQ，是阿里研发的一个队列模型的消息中间件，后开源给 apache 基金会成为了 apache 的顶级开源项目，具有高性能、高可靠、高实时、分布式特点。</p>
+<h2 id="RocketMQ-特点"><a href="#RocketMQ-特点" class="headerlink" title="RocketMQ 特点"></a>RocketMQ 特点</h2><ul>
+<li>支持发布&#x2F;订阅和点对点消息模型</li>
+<li>在一个队列中可靠的先进先出（FIFO）和严格的顺序传递：RocketMQ 默认是多线程处理消息，如果要保证严格按照顺序传递，则需要将多线程改为单线程</li>
+<li>支持拉（pull）和推（push）两种消息模式：拉模式在旧版本支持，现在新版本在慢慢的不推荐拉模式</li>
+<li>单一队列百万消息的堆积能力（RocketMQ 提供亿级消息的堆积能力，重点是堆积了亿级的消息后，依然保持写入低延迟），而且现在是推模式，只要消费端不是特别慢，RocketMQ 是不会有什么问题的</li>
+<li>支持多种消息协议，如 JMS、MQTT 等</li>
+<li>分布式高可用的部署架构，满足至少一次消息传递语义</li>
+<li>提供 docker 镜像用于隔离测试和云集群部署</li>
+<li>提供配置、指标和监控等功能丰富的 Dashboard</li>
+</ul>
+<h2 id="RocketMQ-优势"><a href="#RocketMQ-优势" class="headerlink" title="RocketMQ 优势"></a>RocketMQ 优势</h2><ul>
+<li>支持事务型消息（消息发送和 DB 操作保持两方的最终一致性，RabbitMQ 和 Kafka 不支持），二阶段提交事务消息，如果只是一次也就是 half message 的话是不允许提交的</li>
+<li>支持结合 RocketMQ 的多个系统之间数据最终一致性（多方事务，二方事务是前提）</li>
+<li>支持 18 个级别的延迟消息（kafka 不支持），1s、3s、……2h</li>
+<li>支持指定次数和时间间隔的失败消息重发（Kafka 不支持，RabbitMQ 需要手动确认）</li>
+<li>支持 Broker 端 Tag 过滤，减少不必要的传输（RabbitMQ 和 Kafka 不支持）。给消息打标签，消费者通过标签区分业务，生产者不需要区分业务放不同的 broker</li>
+<li>支持重复消费（RabbitMQ 不支持，Kafka 支持）</li>
+</ul>
+<h1 id="RockerMQ-基本概念"><a href="#RockerMQ-基本概念" class="headerlink" title="RockerMQ 基本概念"></a>RockerMQ 基本概念</h1><p><img src="https://bicycle808-blogs-1312817409.cos.ap-beijing.myqcloud.com/MQ%2Frocket1.png" alt="image.png"><br>zk cap中cp 强一致性 </p>
+<h2 id="NameServer"><a href="#NameServer" class="headerlink" title="NameServer"></a>NameServer</h2><p>NameServer 是一个几乎无状态节点，可集群部署，节点之间无任何信息同步。<br>NameServer 是整个 RocketMQ 的“大脑”，它是 RocketMQ 的服务注册中心，所以 RocketMQ 需要先启动 NameServer 再启动 Rocket 中的 Broker</p>
+<h3 id="NameServer-作用"><a href="#NameServer-作用" class="headerlink" title="NameServer 作用"></a>NameServer 作用</h3><p>名称服务器（NameServer）用来保存 Broker 相关元信息并给 Producer 和 Consumer 查找 Broker 信息。<br>NameServer 被设计成几乎无状态的，可以横向扩展，节点之间相互之间无通信，通过部署多台机器来标记自己是一个集群。<br>每个 Broker 在启动的时候会到 NameServer 注册，Producer 在发送消息前会根据 Topic 到 NameServer 获取到 Broker 的路由信息，Consumer 也会定时获取 Topic 的路由信息，所以从功能上看应该是和 ZooKeeper 差不多，据说 RocketMQ 的早期版本确实是使用的 ZooKeeper，后来改为了自己实现 NameServer。</p>
+<h3 id="NameServer-和-zk-的区别"><a href="#NameServer-和-zk-的区别" class="headerlink" title="NameServer 和 zk 的区别"></a>NameServer 和 zk 的区别</h3><p>zk 主要保证了 cap 中的 cp，强一致性。<br>NameServer 和 ZooKeeper 的作用大致是相同的，从宏观上来看，NameServer 做的东西很少，就是保存一些运行数据，NameServer 之间不互连，这就需要 broker 端连接所有的 NameServer，运行数据的改动要发送到每一个 NameServer 来保证运行数据的一致性（这个一致性确实有点弱），这样就变成了 NameServer 很轻量级，但是 broker 端就要做更多的东西了。<br>而 ZooKeeper 呢，broker 只需要连接其中的一台机器，运行数据分发、一致性都交给了 ZooKeeper 来完成。</p>
+<h3 id="高可用保障"><a href="#高可用保障" class="headerlink" title="高可用保障"></a>高可用保障</h3><p>Broker 在启动时向所有 NameServer 注册（主要是服务器地址等），生产者在发送消息之前先从 NameServer 获取 Broker 服务器地址列表（消费者一样），然后根据负载均衡算法从列表中选择一台服务器进行消息发送。<br>NameServer 与每台 Broker 服务保持长连接，并间隔10S检查 Broker 是否存活，如果检测到 Broker 宕机，则从路由注册表中将其移除，这样就可以实现 RocketMQ 的高可用。</p>
+<h2 id="Broker"><a href="#Broker" class="headerlink" title="Broker"></a>Broker</h2><p>消息服务器（Broker）是消息存储中心，主要作用是接收来自 Producer 的消息并存储，Consumer 从这里取得消息，它还存储与消息相关的元数据，包括用户组、消费进度偏移量、队列信息等，从部署结构图中可以看出 Broker 有 Master 和 Slave 两种类型，Master 既可以写又可以读，Slave 不可以写只可以读。只有当 Master 挂了之后，Consumer 才会去 Slave 读消息。Producer 存储消息时同一个消息只会保存在一个 Broker 上，Broker 之间不会互相同步数据。</p>
+<h3 id="部署方式"><a href="#部署方式" class="headerlink" title="部署方式"></a>部署方式</h3><p>Broker 部署相对复杂，Broker 分为 Master 与 Slave，一个 Master 可以对应多个 Slave，但是一个 Slave 只能对应一个 Master，Master 与 Slave 的对应关系通过指定相同的 Broker Name，不同的 Broker Id 来定义，BrokerId 为0表示 Master，非0表示 Slave，Master 也可以部署多个。<br>从物理结构上看 Broker 的集群部署方式有四种：单 Master、多 Master、多 Master 多 Slave（同步复制）、多 Master 多 Slave（异步复制）</p>
+<h4 id="单-Master"><a href="#单-Master" class="headerlink" title="单 Master"></a>单 Master</h4><p>这种方式一旦 Broker 重启或宕机会导致整个服务不可用，这种方式风险较大，所以不建议线上环境使用。</p>
+<h4 id="多-Master"><a href="#多-Master" class="headerlink" title="多 Master"></a>多 Master</h4><p>所有消息服务器都是 Master，没有 Slave，这种方式优点是配置简单，单个 Master 宕机或重启维护对应用无影响，缺点是单台机器宕机期间，该机器上未被消费的消息在机器恢复之前不可订阅，消息实时性会受影响。</p>
+<h4 id="多-Master-多-Slave（异步复制）"><a href="#多-Master-多-Slave（异步复制）" class="headerlink" title="多 Master 多 Slave（异步复制）"></a>多 Master 多 Slave（异步复制）</h4><p>每个 Master 配置一个 Slave，所以有多对 Master-Slave，消息采用异步复制方式，主备之间有毫秒级消息延迟，这种方式优点是消息丢失的非常少，且消息实时性不会受影响，Master 宕机后消费者可以继续从 Slave 消费，中间的过程对用户应用程序透明，不需要人工干预，性能同多 Master 方式几乎一样，缺点是 Master 宕机时在磁盘损坏情况下会丢失极少量消息。</p>
+<h4 id="多Master多Slave（同步复制）"><a href="#多Master多Slave（同步复制）" class="headerlink" title="多Master多Slave（同步复制）"></a>多Master多Slave（同步复制）</h4><p>每个Master配置一个Slave，所以有多对Master-Slave，消息采用同步复制方式，<strong>主备都写成功才返回成功</strong>，这种方式优点是数据与服务都没有单点问题，Master宕机时消息无延迟，服务与数据的可用性非常高，缺点是性能相对异步复制方式略低，发送消息的延迟会略高。<br>说明：复制是数据从master复制到Slave，刷盘是持久化</p>
+<h3 id="高可用保障-1"><a href="#高可用保障-1" class="headerlink" title="高可用保障"></a>高可用保障</h3><p>每个Broker与Name Server集群中的所有节点建立长连接，定时(每隔30s)注册Topic信息到所有Name Server，Name Server定时(每隔10s)扫描所有存活broker的连接，如果Name Server超过2分钟没有收到心跳，则Name Server断开与Broker的连接</p>
+<h2 id="生产者（Producer）"><a href="#生产者（Producer）" class="headerlink" title="生产者（Producer）"></a>生产者（Producer）</h2><p>也称为消息发布者，负责生产并发送消息至Topic<br>生产者向brokers发送由业务应用程序系统生成的消息，RocketMQ提供了发送：同步、异步和单向（one-way）的多种模式</p>
+<h3 id="同步发送"><a href="#同步发送" class="headerlink" title="同步发送"></a>同步发送</h3><p>同步发送指消息发送方发出数据后会在收到接收方发回响应之后才发下一个数据包，一般用于重要通知消息，例如重要通知邮件、短信。</p>
+<h3 id="异步发送"><a href="#异步发送" class="headerlink" title="异步发送"></a>异步发送</h3><p>异步发送指发送方发出数据后，不等接收方发回响应，接着发送下个数据包，一般用于可能链路耗时较长而对响应时间敏感的业务场景，例如用户视频上传后通知启动转码服务。通过监听回调，获取发送结果。</p>
+<h3 id="单向发送"><a href="#单向发送" class="headerlink" title="单向发送"></a>单向发送</h3><p>单向发送是指只负责发送消息而不等待服务器回应且没有回调函数触发，适用于某些耗时非常短但对可靠性要求并不高的场景，例如日志收集。这点类似kafka的发送并忘记。</p>
+<h3 id="生产者组"><a href="#生产者组" class="headerlink" title="生产者组"></a>生产者组</h3><p>生产者组（Producer Group）是一类Producer的集合，这类Producer通常发送一类消息并且发送逻辑一致，所以将这些Producer分组在一起，从部署结构上看生产者通过Producer Group的名字来标记自己是一个集群。</p>
+<h3 id="高可用保障-2"><a href="#高可用保障-2" class="headerlink" title="高可用保障"></a>高可用保障</h3><p>Producer与Name Server集群中的其中一个节点(随机选择)建立长连接，定期从Name Server取Topic路由信息，并向提供Topic服务的Master建立长连接，且定时向Master发送心跳，Producer完全无状态，可集群部署。<br>Producer每隔30s（由ClientConfig的pollNameServerInterval）从Name Server获取所有topic队列的最新情况，这意味着如果Broker不可用，Producer最多30s能够感知，在此期间内发往Broker的所有消息都会失败。<br>Producer每隔30s（由ClientConfig中heartbeatBrokerInterval决定）向所有关联的broker发送心跳，Broker每隔10s中扫描所有存活的连接，如果Broker在2分钟内没有收到心跳数据，则关闭与Producer的连接。</p>
+<h2 id="消费者（Consumer）"><a href="#消费者（Consumer）" class="headerlink" title="消费者（Consumer）"></a>消费者（Consumer）</h2><p>也称为消息订阅者，负责从Topic接收并消费消息<br>消费者从brokers那里拉取信息并将其输入应用程序，在用户应用的角度，提供了两种类型的消费者：</p>
+<ul>
+<li>Pull：Pull型消费者主动地从brokers那里拉取信息，只要批量拉取到消息，用户应用程序就会启动消费过程</li>
+<li>Push：Push型消费者封装消息的拉取、消费进度和维护内部的其他工作，将一个在消息到达时执行的回调接口留给终端用户来实现</li>
+</ul>
+<h3 id="消费者组"><a href="#消费者组" class="headerlink" title="消费者组"></a>消费者组</h3><p>消费者组（Consumer Group）一类Consumer的集合名称，这类Consumer通常消费同一类消息并且消费逻辑一致，所以将这些Consumer分组在一起，消费者组与生产者组类似，都是将相同角色的分组在一起并命名，分组是个很精妙的概念设计，RocketMQ正是通过这种分组机制，实现了天然的消息负载均衡。<br>消费消息时通过Consumer Group实现了将消息分发到多个消费者服务器实例，比如某个Topic有9条消息，其中一个Consumer Group有3个实例（3个进程或3台机器），那么每个实例将均摊3条消息，这也意味着我们可以很方便的通过加机器来实现水平扩展。</p>
+<h3 id="高可用保障-3"><a href="#高可用保障-3" class="headerlink" title="高可用保障"></a>高可用保障</h3><p>Consumer与Name Server集群中的其中一个节点(随机选择)建立长连接，定期从Name Server获取Topic路由信息，并向提供Topic服务的Master、Slave建立长连接，且定时向Master、Slave发送心跳，Consumer既可以从Master订阅消息，也可以从Slave订阅消息，订阅规则由Broker配置决定。<br>Consumer每隔30s从Name server获取topic的最新队列情况，这意味着Broker不可用时，Consumer最多需要30s才能感知。<br>Consumer每隔30s（由ClientConfig中heartbeatBrokerInterval决定）向所有关联的broker发送心跳，Broker每隔10s扫描所有存活的连接，若某个连接2分钟内没有发送心跳数据，则关闭连接；并向该Consumer Group的所有Consumer发出通知，Group内的Consumer重新分配队列，然后继续消费。<br>当Consumer得到master宕机通知后，转向slave消费，slave不能保证master的消息100%都同步过来了，因此会有少量的消息丢失，但是一旦master恢复，未同步过去的消息会被最终消费掉。</p>
+<h2 id="运转流程"><a href="#运转流程" class="headerlink" title="运转流程"></a>运转流程</h2><p><img src="https://bicycle808-blogs-1312817409.cos.ap-beijing.myqcloud.com/MQ%2Frocket2.png" alt="image.png"></p>
+<ol>
+<li>Name Server先启动</li>
+<li>Broker启动时向NameServer注册</li>
+<li>生产者在发送某个主题的消息之前先从NameServer获取Broker服务器地址列表（有可能是集群），然后根据负载均衡算法从列表中选择一台Broker进行消息发送</li>
+<li>NameServer与每台Broker服务器保持长连接，并间隔10S检测Broker是否存活，如果检测到Broker宕机（使用心跳机制，如果检测超过120S），则从路由注册表中将其移除</li>
+<li>消费者在订阅某个主题的消息之前从NamerServer获取Broker服务器地址列表（有可能是集群），但是消费者选择从Broker中订阅消息，订阅规则由Broker配置决定</li>
+</ol>
+<h2 id="名词解释"><a href="#名词解释" class="headerlink" title="名词解释"></a>名词解释</h2><h3 id="消息"><a href="#消息" class="headerlink" title="消息"></a>消息</h3><p>消息（Message）就是要传输的信息，一条消息必须有一个主题（Topic），主题可以看做是你的信件要邮寄的地址，一条消息也可以拥有一个可选的标签（Tag）和额处的键值对，它们可以用于设置一个业务key并在Broker上查找此消息以便在开发期间查找问题。</p>
+<h3 id="主题"><a href="#主题" class="headerlink" title="主题"></a>主题</h3><p>主题（Topic）可以看做消息的规类，它是消息的第一级类型。<br>比如一个电商系统可以分为：交易消息、物流消息等，一条消息必须有一个Topic，Topic与生产者和消费者的关系非常松散，一个Topic可以有0个、1个、多个生产者向其发送消息，一个生产者也可以同时向不同的Topic发送消息，一个Topic也可以被0个、1个、多个消费者订阅<br>注意：一个topic默认四个消息队列</p>
+<h3 id="标签"><a href="#标签" class="headerlink" title="标签"></a>标签</h3><p>标签（Tag）可以看作子主题，它是消息的第二级类型，用于为用户提供额外的灵活性。<br>使用标签，同一业务模块不同目的的消息就可以用相同Topic而不同的Tag来标识，比如交易消息又可以分为：交易创建消息、交易完成消息等，一条消息可以没有Tag，标签有助于保持您的代码干净和连贯，并且还可以为RocketMQ提供的查询系统提供帮助。</p>
+<h3 id="消息队列"><a href="#消息队列" class="headerlink" title="消息队列"></a>消息队列</h3><p>消息队列（Message Queue），主题被划分为一个或多个子主题，即消息队列。<br>一个Topic下可以设置多个消息队列，发送消息时执行该消息的Topic，RocketMQ会轮询该Topic下的所有队列将消息发出去。</p>
+<h3 id="消息消费模式"><a href="#消息消费模式" class="headerlink" title="消息消费模式"></a>消息消费模式</h3><p>消息消费模式有两种：集群消费（Clustering）和广播消费（Broadcasting）<br>默认情况下就是集群消费，该模式下一个消费者集群共同消费一个主题的多个队列，一个队列只会被一个消费者消费，如果某个消费者挂掉，分组内其它消费者会接替挂掉的消费者继续消费。<br>而广播消费消息会发给消费者组中的每一个消费者进行消费。</p>
+<h3 id="消息顺序"><a href="#消息顺序" class="headerlink" title="消息顺序"></a>消息顺序</h3><p>消息顺序（Message Order）有两种：顺序消费（Orderly）和并行消费（Concurrently）<br>顺序消费表示消息消费的顺序同生产者为每个消息队列发送的顺序一致，所以如果正在处理全局顺序是强制性的场景，需要确保使用的主题只有一个消息队列，并行消费不再保证消息顺序，消费的最大并行数量受每个消费者客户端指定的线程池限制。</p>
+<h1 id="设计理念"><a href="#设计理念" class="headerlink" title="设计理念"></a>设计理念</h1><p>RocketMQ的设计基于主题的发布与订阅模式，其核心功能包括消息发送、消息存储(Broker)、消息消费，整体设计追求简单与性能第一，主要体现在以下三个方面</p>
+<h2 id="NameServer设计及其简单"><a href="#NameServer设计及其简单" class="headerlink" title="NameServer设计及其简单"></a>NameServer设计及其简单</h2><p>RocketMQ摒弃了业界常用的zookeeper作为注册中心，而是使用自研的NameServer来实现元数据的管理，因为Topic路由信息无须在集群间保持强一致性，追求最终一致性，并且能容忍分钟级的不一致，所以RocketMQ的NameServer集群间互不通信，极大降低了设计的复杂度，降低了对网络的要求，提升性能。</p>
+<h2 id="高效的IO存储机制"><a href="#高效的IO存储机制" class="headerlink" title="高效的IO存储机制"></a>高效的IO存储机制</h2><p>RocketMQ追求消息发送的高吞吐量，RocketMQ消息存储文件设计成文件组的概念，组内单个文件大小固定，方便引入内存映射机制。<br>所有主题的消息存储基于顺序写，提升写性能，同时为了兼顾消息消费与消息查找，引入了消息消费队列文件与索引文件。</p>
+<h2 id="容忍存在的设计缺陷"><a href="#容忍存在的设计缺陷" class="headerlink" title="容忍存在的设计缺陷"></a>容忍存在的设计缺陷</h2><p>适当将某些工作下放给RocketMQ使用者，消息中间件的实现者经常会遇到一个难题：<br>如何保证消息一定能被消息消费者消费，并且保证只消费一次，RocketMQ的设计者给出的解决办法是不解决这个难题，而是退而求其次，只保证消息被消费者消费，但设计上允许消息被重复消费，这样极大地简化了消息中间件的内核，使得实现消息发送高可用变得非常简单与高效，消息重复问题由消费者在消息消费时实现幂等。</p>
+<h1 id="RocketMQ架构"><a href="#RocketMQ架构" class="headerlink" title="RocketMQ架构"></a>RocketMQ架构</h1><p><img src="https://bicycle808-blogs-1312817409.cos.ap-beijing.myqcloud.com/MQ%2Frocket3.png" alt="image.png"></p>
+<h2 id="NameServer集群"><a href="#NameServer集群" class="headerlink" title="NameServer集群"></a>NameServer集群</h2><p>提供轻量级的服务发现及路由，每个NameServer记录完整的路由信息，提供相应的读写服务，支持快速存储扩展，有些其它开源中间件使用ZooKeeper实现服务发现及路由功能，如Apache Kafka。<br>NameServer是一个功能齐全的服务器，主要包含两个功能：</p>
+<ol>
+<li>Broker管理，接收来自Broker集群的注册请求，提供心跳机制检测Broker是否存活</li>
+<li>路由管理，每个NameServer持有全部有关Broker集群和客户端请求队列的路由信息</li>
+</ol>
+<h2 id="Broker集群"><a href="#Broker集群" class="headerlink" title="Broker集群"></a>Broker集群</h2><p>通过提供轻量级的Topic和Queue机制处理消息存储。<br>同时支持推（Push）和拉（Pull）两种模型，包含容错机制。提供强大的峰值填充和以原始时间顺序累积数千亿条消息的能力，此外还提供灾难恢复，丰富的指标统计数据和警报机制，这些都是传统的消息系统缺乏的。<br>Broker有几个重要的子模块：</p>
+<ol>
+<li>远程处理模块，Broker入口，处理来自客户端的请求</li>
+<li>客户端管理，管理客户端（包括消息生产者和消费者），维护消费者的主题订阅</li>
+<li>存储服务，提供在物理硬盘上存储和查询消息的简单API</li>
+<li>HA服务，提供主从Broker间数据同步</li>
+<li>索引服务，通过指定键为消息建立索引并提供快速消息查询</li>
+</ol>
+<h2 id="Producer集群"><a href="#Producer集群" class="headerlink" title="Producer集群"></a>Producer集群</h2><p>消息生产者支持分布式部署，分布式生产者通过多种负载均衡模式向Broker集群发送消息。</p>
+<h2 id="Consumer集群"><a href="#Consumer集群" class="headerlink" title="Consumer集群"></a>Consumer集群</h2><p>消息消费者也支持Push和Pull模型的分布式部署，还支持集群消费和消息广播，提供了实时的消息订阅机制，可以满足大多数消费者的需求。<br>有关架构图中集群间交互方式的说明：</p>
+<ol>
+<li>Broker Master和Broker Slave是主从结构，会执行数据同步Data Sync</li>
+<li>每个Broker与NameServer集群中所有节点建立长连接，定时注册Topic信息到所有NameServer</li>
+<li>Producer与NameServer集群中的其中一个节点（随机）建立长连接，定期从NameServer获取Topic路由信息，并与提供Topic服务的BrokerMaster建立长连接，定时向Broker发送心跳</li>
+<li>Producer只能将消息发送到Broker Master，但是Consumer同时和提供Topic服务的Master和Slave建立长连接，既可以从Master订阅消息，也可以从Slave订阅消息</li>
+</ol>
+<h1 id="设计目标"><a href="#设计目标" class="headerlink" title="设计目标"></a>设计目标</h1><h2 id="架构模式"><a href="#架构模式" class="headerlink" title="架构模式"></a>架构模式</h2><p>RocketMQ与大部分消息中间件一样，采用发布订阅模式，基本的参与组件主要包括：消息发送者、消息服务器（消息存储）、消息消费、路由发现。</p>
+<h3 id="顺序消息"><a href="#顺序消息" class="headerlink" title="顺序消息"></a>顺序消息</h3><p>顺序消息（FIFO：First Input First Output）是一种严格按照顺序进行发布和消费的消息类型，要求消息的发布和消息消费都按照顺序进行，RocketMQ可以严格保证消息有序。<br>RocketMQ可以严格的保证消息有序，但这个顺序不是全局顺序，只是分区（queue）顺序，要全局顺序只能一个分区，但是同一条queue里面，RocketMQ的确是能保证FIFO的。</p>
+<h3 id="消息过滤"><a href="#消息过滤" class="headerlink" title="消息过滤"></a>消息过滤</h3><p>消息过滤是指在消息消费时，消息消费者可以对同一主题下的消息按照规则只消费自己感兴趣的消息RocketMQ消息过滤支持在服务端与消费端的消息过滤机制。</p>
+<ol>
+<li>消息在Broker端过滤，Broker只将消息消费者感兴趣的消息发送给消息消费者</li>
+<li>消息在消息消费端过滤，消息过滤方式完全由消息消费者自定义，但缺点是有很多无用的消息会从Broker传输到消费端</li>
+</ol>
+<h3 id="消息存储"><a href="#消息存储" class="headerlink" title="消息存储"></a>消息存储</h3><p>消息中间件的一个核心实现是消息的存储，对消息存储一般有如下两个维度的考量<br>消息堆积能力和消息存储性能，RocketMQ追求消息存储的高性能，引入内存映射机制，所有主题的消息顺序存储在同一个文件中，同时为了避免消息无限在消息存储服务器中累积，引入了消息文件过期机制与文件存储空间报警机制。</p>
+<h2 id="消息高可用性"><a href="#消息高可用性" class="headerlink" title="消息高可用性"></a>消息高可用性</h2><p>通常影响消息可靠性的有以下几种情况</p>
+<ol>
+<li>Broker正常关机</li>
+<li>Broker异常宕机</li>
+<li>操作系统宕机</li>
+<li>机器断电，但是能立即恢复供电情况</li>
+<li>机器无法开机（可能是CPU、主板、内存等关键设备损坏）</li>
+<li>磁盘设备损坏</li>
+</ol>
+<p>针对上述情况，情况1<del>4的RocketMQ在同步刷盘机制下可以确保不丢失消息，在异步刷盘模式下，会丢失少量消息。情况5</del>6属于单点故障，一旦发生，该节点上的消息全部丢失，如果开启了异步复制机制，RoketMQ能保证只丢失少量消息，而使用同步复制机制可以满足消息可靠性要求极高的场合。</p>
+<h3 id="消息到消费低延迟"><a href="#消息到消费低延迟" class="headerlink" title="消息到消费低延迟"></a>消息到消费低延迟</h3><p>RocketMQ在消息不发生消息堆积时，以长轮询模式实现准实时的消息推送模式。</p>
+<h3 id="确保消息必须被消费一次"><a href="#确保消息必须被消费一次" class="headerlink" title="确保消息必须被消费一次"></a>确保消息必须被消费一次</h3><p>RocketMQ通过消息消费确认机制（ACK）来确保消息至少被消费一次，但由于ACK消息有可能丢失等其他原因，RocketMQ无法做到消息只被消费一次，有重复消费的可能。</p>
+<h3 id="回溯消息"><a href="#回溯消息" class="headerlink" title="回溯消息"></a>回溯消息</h3><p>回溯消息是指消息消费端已经消费成功的消息，由于业务要求需要重新消费消息，RocketMQ支持按时间回溯消息，时间维度可精确到毫秒，可以向前或向后回溯。</p>
+<h3 id="消息堆积"><a href="#消息堆积" class="headerlink" title="消息堆积"></a>消息堆积</h3><p>消息中间件的主要功能是异步解耦，必须具备应对前端的数据洪峰，提高后端系统的可用性，必然要求消息中间件具备一定的消息堆积能力，RocketMQ消息存储使用磁盘文件（内存映射机制），并且在物理布局上为多个大小相等的文件组成逻辑文件组，可以无限循环使用，RocketMQ消息存储文件并不是永久存储在消息服务器端，而是提供了过期机制，默认保留3天。</p>
+<h3 id="延时消息"><a href="#延时消息" class="headerlink" title="延时消息"></a>延时消息</h3><p>延时消息是指消息发送到Broker后，不能被消息消费端立即消费，要到特定的时间点或者等待特定的时间后才能被消费。<br>如果要支持任意精度的定时消息消费，必须在消息服务端对消息进行排序，势必带来很大的性能损耗，故RocketMQ不支持任意进度的定时消息，而只支持特定延迟级别。（一个说法是任意精度的定时消息会带来性能损耗，但是阿里云版本的RocketMQ却提供这样的功能，充值收费优先策略？）<br>注意：和RabbitMQ一样，如果第一个消息是延时10S，第二个延迟1S，得等第一个先消费后第二个才会消费。但是RocketMQ是多线程，如果不再同一个Queue中的话，则不影响。</p>
+<h3 id="消息重试机制"><a href="#消息重试机制" class="headerlink" title="消息重试机制"></a>消息重试机制</h3><p>消息重试是指消息在消费时，如果发送异常，消息中间件需要支持消息重新投递，RocketMQ支持消息重试机制。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://www.litengbin.com">Tengbin Li</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://www.litengbin.com/2023/07/05/RocketMQ%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90%EF%BC%88%E4%B8%8A%EF%BC%89/">https://www.litengbin.com/2023/07/05/RocketMQ深度解析（上）/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://www.litengbin.com" target="_blank">Tengbin 的技术博客</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91/">后端开发</a><a class="post-meta__tags" href="/tags/%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0/">源码学习</a><a class="post-meta__tags" href="/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/">消息队列</a></div><div class="post_share"><div class="social-share" data-image="https://bicycle808-blogs-1312817409.cos.ap-beijing.myqcloud.com/MQ%2Frocket-cover.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-full"><a href="/2023/07/04/RabbitMQ%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90%EF%BC%88%E4%B8%8B%EF%BC%89/" title="RabbitMQ深度解析（下）"><img class="cover" src="https://bicycle808-blogs-1312817409.cos.ap-beijing.myqcloud.com/Header_Post_RabbitMQ_ES-3.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">RabbitMQ深度解析（下）</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2023/07/04/RabbitMQ%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90%EF%BC%88%E4%B8%8A%EF%BC%89/" title="RabbitMQ深度解析（上）"><img class="cover" src="https://bicycle808-blogs-1312817409.cos.ap-beijing.myqcloud.com/Header_Post_RabbitMQ_ES-3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-07-04</div><div class="title">RabbitMQ深度解析（上）</div></div></a></div><div><a href="/2023/07/04/RabbitMQ%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90%EF%BC%88%E4%B8%8B%EF%BC%89/" title="RabbitMQ深度解析（下）"><img class="cover" src="https://bicycle808-blogs-1312817409.cos.ap-beijing.myqcloud.com/Header_Post_RabbitMQ_ES-3.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-07-04</div><div class="title">RabbitMQ深度解析（下）</div></div></a></div><div><a href="/2023/07/04/tomcat%E6%BA%90%E7%A0%81%E5%89%96%E6%9E%90/" title="tomcat源码剖析（更新中）"><img class="cover" src="https://bicycle808-blogs-1312817409.cos.ap-beijing.myqcloud.com/apache_tomcat-1024x415.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-07-04</div><div class="title">tomcat源码剖析（更新中）</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://bicycle808-blogs-1312817409.cos.ap-beijing.myqcloud.com/02043070889f024eeb02a51c42658b9.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Tengbin Li</div><div class="author-info__description">大鹏一日同风起，扶摇直上九万里</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">5</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">4</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">2</div></a></div><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/bicycle-808" target="_blank" title="Github"><i class="fab fa-github" style="color: ;"></i></a><a class="social-icon" href="mailto:745075779@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: ;"></i></a><a class="social-icon" href="https://www.litengbin.com/static/wechat.jpg" target="_blank" title="微信"><i class="fab fa-weixin" style="color: ;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">最近会陆续将其他地方的文章迁移到本站中，更新频率视加班情况而定~🤣</div></div><div class="xpand" style="height:200px;"><canvas class="illo" width="800" height="800" style="max-width: 200px; max-height: 200px; touch-action: none; width: 640px; height: 640px;"></canvas></div><script src="https://npm.elemecdn.com/ethan4116-blog/lib/js/other/two-people/twopeople1.js"></script><script src="https://npm.elemecdn.com/ethan4116-blog/lib/js/other/two-people/zdog.dist.js"></script><script id="rendered-js" src="https://npm.elemecdn.com/ethan4116-blog/lib/js/other/two-people/twopeople.js"></script><style>.card-widget.card-announcement {
+margin: 0;
+align-items: center;
+justify-content: center;
+text-align: center;
+}
+canvas {
+display: block;
+margin: 0 auto;
+cursor: move;
+}</style><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#RocketMQ-%E4%BB%8B%E7%BB%8D"><span class="toc-number">1.</span> <span class="toc-text">RocketMQ 介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#RocketMQ-%E7%89%B9%E7%82%B9"><span class="toc-number">1.1.</span> <span class="toc-text">RocketMQ 特点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RocketMQ-%E4%BC%98%E5%8A%BF"><span class="toc-number">1.2.</span> <span class="toc-text">RocketMQ 优势</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#RockerMQ-%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="toc-number">2.</span> <span class="toc-text">RockerMQ 基本概念</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#NameServer"><span class="toc-number">2.1.</span> <span class="toc-text">NameServer</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#NameServer-%E4%BD%9C%E7%94%A8"><span class="toc-number">2.1.1.</span> <span class="toc-text">NameServer 作用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#NameServer-%E5%92%8C-zk-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">2.1.2.</span> <span class="toc-text">NameServer 和 zk 的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%AB%98%E5%8F%AF%E7%94%A8%E4%BF%9D%E9%9A%9C"><span class="toc-number">2.1.3.</span> <span class="toc-text">高可用保障</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Broker"><span class="toc-number">2.2.</span> <span class="toc-text">Broker</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%83%A8%E7%BD%B2%E6%96%B9%E5%BC%8F"><span class="toc-number">2.2.1.</span> <span class="toc-text">部署方式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8D%95-Master"><span class="toc-number">2.2.1.1.</span> <span class="toc-text">单 Master</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A4%9A-Master"><span class="toc-number">2.2.1.2.</span> <span class="toc-text">多 Master</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A4%9A-Master-%E5%A4%9A-Slave%EF%BC%88%E5%BC%82%E6%AD%A5%E5%A4%8D%E5%88%B6%EF%BC%89"><span class="toc-number">2.2.1.3.</span> <span class="toc-text">多 Master 多 Slave（异步复制）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A4%9AMaster%E5%A4%9ASlave%EF%BC%88%E5%90%8C%E6%AD%A5%E5%A4%8D%E5%88%B6%EF%BC%89"><span class="toc-number">2.2.1.4.</span> <span class="toc-text">多Master多Slave（同步复制）</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%AB%98%E5%8F%AF%E7%94%A8%E4%BF%9D%E9%9A%9C-1"><span class="toc-number">2.2.2.</span> <span class="toc-text">高可用保障</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%94%9F%E4%BA%A7%E8%80%85%EF%BC%88Producer%EF%BC%89"><span class="toc-number">2.3.</span> <span class="toc-text">生产者（Producer）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%8C%E6%AD%A5%E5%8F%91%E9%80%81"><span class="toc-number">2.3.1.</span> <span class="toc-text">同步发送</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%82%E6%AD%A5%E5%8F%91%E9%80%81"><span class="toc-number">2.3.2.</span> <span class="toc-text">异步发送</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%95%E5%90%91%E5%8F%91%E9%80%81"><span class="toc-number">2.3.3.</span> <span class="toc-text">单向发送</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%94%9F%E4%BA%A7%E8%80%85%E7%BB%84"><span class="toc-number">2.3.4.</span> <span class="toc-text">生产者组</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%AB%98%E5%8F%AF%E7%94%A8%E4%BF%9D%E9%9A%9C-2"><span class="toc-number">2.3.5.</span> <span class="toc-text">高可用保障</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B6%88%E8%B4%B9%E8%80%85%EF%BC%88Consumer%EF%BC%89"><span class="toc-number">2.4.</span> <span class="toc-text">消费者（Consumer）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B6%88%E8%B4%B9%E8%80%85%E7%BB%84"><span class="toc-number">2.4.1.</span> <span class="toc-text">消费者组</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%AB%98%E5%8F%AF%E7%94%A8%E4%BF%9D%E9%9A%9C-3"><span class="toc-number">2.4.2.</span> <span class="toc-text">高可用保障</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%90%E8%BD%AC%E6%B5%81%E7%A8%8B"><span class="toc-number">2.5.</span> <span class="toc-text">运转流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%8D%E8%AF%8D%E8%A7%A3%E9%87%8A"><span class="toc-number">2.6.</span> <span class="toc-text">名词解释</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B6%88%E6%81%AF"><span class="toc-number">2.6.1.</span> <span class="toc-text">消息</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BB%E9%A2%98"><span class="toc-number">2.6.2.</span> <span class="toc-text">主题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%87%E7%AD%BE"><span class="toc-number">2.6.3.</span> <span class="toc-text">标签</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97"><span class="toc-number">2.6.4.</span> <span class="toc-text">消息队列</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E6%B6%88%E8%B4%B9%E6%A8%A1%E5%BC%8F"><span class="toc-number">2.6.5.</span> <span class="toc-text">消息消费模式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E9%A1%BA%E5%BA%8F"><span class="toc-number">2.6.6.</span> <span class="toc-text">消息顺序</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%AE%BE%E8%AE%A1%E7%90%86%E5%BF%B5"><span class="toc-number">3.</span> <span class="toc-text">设计理念</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#NameServer%E8%AE%BE%E8%AE%A1%E5%8F%8A%E5%85%B6%E7%AE%80%E5%8D%95"><span class="toc-number">3.1.</span> <span class="toc-text">NameServer设计及其简单</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%AB%98%E6%95%88%E7%9A%84IO%E5%AD%98%E5%82%A8%E6%9C%BA%E5%88%B6"><span class="toc-number">3.2.</span> <span class="toc-text">高效的IO存储机制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%B9%E5%BF%8D%E5%AD%98%E5%9C%A8%E7%9A%84%E8%AE%BE%E8%AE%A1%E7%BC%BA%E9%99%B7"><span class="toc-number">3.3.</span> <span class="toc-text">容忍存在的设计缺陷</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#RocketMQ%E6%9E%B6%E6%9E%84"><span class="toc-number">4.</span> <span class="toc-text">RocketMQ架构</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#NameServer%E9%9B%86%E7%BE%A4"><span class="toc-number">4.1.</span> <span class="toc-text">NameServer集群</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Broker%E9%9B%86%E7%BE%A4"><span class="toc-number">4.2.</span> <span class="toc-text">Broker集群</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Producer%E9%9B%86%E7%BE%A4"><span class="toc-number">4.3.</span> <span class="toc-text">Producer集群</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Consumer%E9%9B%86%E7%BE%A4"><span class="toc-number">4.4.</span> <span class="toc-text">Consumer集群</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%AE%BE%E8%AE%A1%E7%9B%AE%E6%A0%87"><span class="toc-number">5.</span> <span class="toc-text">设计目标</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9E%B6%E6%9E%84%E6%A8%A1%E5%BC%8F"><span class="toc-number">5.1.</span> <span class="toc-text">架构模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A1%BA%E5%BA%8F%E6%B6%88%E6%81%AF"><span class="toc-number">5.1.1.</span> <span class="toc-text">顺序消息</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E8%BF%87%E6%BB%A4"><span class="toc-number">5.1.2.</span> <span class="toc-text">消息过滤</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E5%AD%98%E5%82%A8"><span class="toc-number">5.1.3.</span> <span class="toc-text">消息存储</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E9%AB%98%E5%8F%AF%E7%94%A8%E6%80%A7"><span class="toc-number">5.2.</span> <span class="toc-text">消息高可用性</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E5%88%B0%E6%B6%88%E8%B4%B9%E4%BD%8E%E5%BB%B6%E8%BF%9F"><span class="toc-number">5.2.1.</span> <span class="toc-text">消息到消费低延迟</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A1%AE%E4%BF%9D%E6%B6%88%E6%81%AF%E5%BF%85%E9%A1%BB%E8%A2%AB%E6%B6%88%E8%B4%B9%E4%B8%80%E6%AC%A1"><span class="toc-number">5.2.2.</span> <span class="toc-text">确保消息必须被消费一次</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%9E%E6%BA%AF%E6%B6%88%E6%81%AF"><span class="toc-number">5.2.3.</span> <span class="toc-text">回溯消息</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E5%A0%86%E7%A7%AF"><span class="toc-number">5.2.4.</span> <span class="toc-text">消息堆积</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BB%B6%E6%97%B6%E6%B6%88%E6%81%AF"><span class="toc-number">5.2.5.</span> <span class="toc-text">延时消息</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E9%87%8D%E8%AF%95%E6%9C%BA%E5%88%B6"><span class="toc-number">5.2.6.</span> <span class="toc-text">消息重试机制</span></a></li></ol></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2023/07/05/RocketMQ%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90%EF%BC%88%E4%B8%8A%EF%BC%89/" title="RocketMQ深度解析（上）"><img src="https://bicycle808-blogs-1312817409.cos.ap-beijing.myqcloud.com/MQ%2Frocket-cover.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RocketMQ深度解析（上）"/></a><div class="content"><a class="title" href="/2023/07/05/RocketMQ%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90%EF%BC%88%E4%B8%8A%EF%BC%89/" title="RocketMQ深度解析（上）">RocketMQ深度解析（上）</a><time datetime="2023-07-05T01:36:58.000Z" title="发表于 2023-07-05 09:36:58">2023-07-05</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2023/07/04/RabbitMQ%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90%EF%BC%88%E4%B8%8B%EF%BC%89/" title="RabbitMQ深度解析（下）"><img src="https://bicycle808-blogs-1312817409.cos.ap-beijing.myqcloud.com/Header_Post_RabbitMQ_ES-3.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RabbitMQ深度解析（下）"/></a><div class="content"><a class="title" href="/2023/07/04/RabbitMQ%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90%EF%BC%88%E4%B8%8B%EF%BC%89/" title="RabbitMQ深度解析（下）">RabbitMQ深度解析（下）</a><time datetime="2023-07-04T12:53:48.000Z" title="发表于 2023-07-04 20:53:48">2023-07-04</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2023/07/04/RabbitMQ%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90%EF%BC%88%E4%B8%8A%EF%BC%89/" title="RabbitMQ深度解析（上）"><img src="https://bicycle808-blogs-1312817409.cos.ap-beijing.myqcloud.com/Header_Post_RabbitMQ_ES-3.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="RabbitMQ深度解析（上）"/></a><div class="content"><a class="title" href="/2023/07/04/RabbitMQ%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90%EF%BC%88%E4%B8%8A%EF%BC%89/" title="RabbitMQ深度解析（上）">RabbitMQ深度解析（上）</a><time datetime="2023-07-04T12:32:28.000Z" title="发表于 2023-07-04 20:32:28">2023-07-04</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2023/07/04/tomcat%E6%BA%90%E7%A0%81%E5%89%96%E6%9E%90/" title="tomcat源码剖析（更新中）"><img src="https://bicycle808-blogs-1312817409.cos.ap-beijing.myqcloud.com/apache_tomcat-1024x415.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="tomcat源码剖析（更新中）"/></a><div class="content"><a class="title" href="/2023/07/04/tomcat%E6%BA%90%E7%A0%81%E5%89%96%E6%9E%90/" title="tomcat源码剖析（更新中）">tomcat源码剖析（更新中）</a><time datetime="2023-07-04T03:26:42.000Z" title="发表于 2023-07-04 11:26:42">2023-07-04</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2023/06/25/hello-world/" title="Hello World"><img src="https://pic-go-img.oss-cn-hangzhou.aliyuncs.com/202202230023069.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Hello World"/></a><div class="content"><a class="title" href="/2023/06/25/hello-world/" title="Hello World">Hello World</a><time datetime="2023-06-25T03:26:42.000Z" title="发表于 2023-06-25 11:26:42">2023-06-25</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2023 By Tengbin Li</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(()=>{
+  const init = () => {
+    twikoo.init(Object.assign({
+      el: '#twikoo-wrap',
+      envId: 'https://blog.litengbin.com/',
+      region: 'ap-shanghai',
+      onCommentLoaded: function () {
+        btf.loadLightbox(document.querySelectorAll('#twikoo .tk-content img:not(.tk-owo-emotion)'))
+      }
+    }, null))
+  }
+
+  const getCount = () => {
+    const countELement = document.getElementById('twikoo-count')
+    if(!countELement) return
+    twikoo.getCommentsCount({
+      envId: 'https://blog.litengbin.com/',
+      region: 'ap-shanghai',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      countELement.textContent = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const runFn = () => {
+    init()
+    GLOBAL_CONFIG_SITE.isPost && getCount()
+  }
+
+  const loadTwikoo = () => {
+    if (typeof twikoo === 'object') {
+      setTimeout(runFn,0)
+      return
+    } 
+    getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(runFn)
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo()
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script></div><script src="/js/my.js"></script><script defer="defer" id="ribbon" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-ribbon.min.js" size="150" alpha="0.6" zIndex="-1" mobile="false" data-click="true"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="is-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div class="no-result" id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div><!-- hexo injector body_end start --><script data-pjax src="https://npm.elemecdn.com/hexo-filter-gitcalendar/lib/gitcalendar.js"></script><script data-pjax>
+  function gitcalendar_injector_config(){
+      var parent_div_git = document.getElementById('recent-posts');
+      var item_html = '<div class="recent-post-item" id="gitcalendarBar" style="width:100%;height:auto;padding:10px;"><style>#git_container{min-height: 280px}@media screen and (max-width:650px) {#git_container{min-height: 0px}}</style><div id="git_loading" style="width:10%;height:100%;margin:0 auto;display: block;"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 50 50" style="enable-background:new 0 0 50 50" xml:space="preserve"><path fill="#d0d0d0" d="M25.251,6.461c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615V6.461z" transform="rotate(275.098 25 25)"><animatetransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite"></animatetransform></path></svg><style>#git_container{display: none;}</style></div><div id="git_container"></div></div>';
+      parent_div_git.insertAdjacentHTML("afterbegin",item_html)
+      console.log('已挂载gitcalendar')
+      }
+
+    if( document.getElementById('recent-posts') && (location.pathname ==='/'|| '/' ==='all')){
+        gitcalendar_injector_config()
+        GitCalendarInit("https://git-calender.nickxu.top/api?bicycle-808",['#ebedf0', '#fdcdec', '#fc9bd9', '#fa6ac5', '#f838b2', '#f5089f', '#c4067e', '#92055e', '#540336', '#48022f', '#30021f'],'bicycle-808')
+    }
+  </script><!-- hexo injector body_end end --></body></html>
