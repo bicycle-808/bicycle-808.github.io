@@ -4,6 +4,19 @@
   
     
     <entry>
+      <title>开源项目 Tengbin_ACM 企业级中央配置引擎</title>
+      <link href="/2023/07/26/%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE%20Tengbin_ACM%20%E4%BC%81%E4%B8%9A%E7%BA%A7%E4%B8%AD%E5%A4%AE%E9%85%8D%E7%BD%AE%E5%BC%95%E6%93%8E/"/>
+      <url>/2023/07/26/%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE%20Tengbin_ACM%20%E4%BC%81%E4%B8%9A%E7%BA%A7%E4%B8%AD%E5%A4%AE%E9%85%8D%E7%BD%AE%E5%BC%95%E6%93%8E/</url>
+      
+        <content type="html"><![CDATA[<blockquote><p>本项目是适用于在企业中一同管理多个项目配置信息的中央配置引擎。</p></blockquote><h1 id="项目亮点"><a href="#项目亮点" class="headerlink" title="项目亮点"></a>项目亮点</h1><p>用于统一管理项目中各种配置的平台，是互联网项目开发中必不可少的部分。由于它的存在，可以让我们在开发中减少因配置更新迭代而产生的大量代码。同时，针对成熟的技术从而实现配置热部署，当我们的配置发生变化时，无须停止服务，实现配置的更新。</p><p>采用 <code>SpringBoot + SpringCloud</code> 环境搭建，结合微服务项目引入应用。项目中使用了 <code>Redis + FastDFS</code> 作为缓存和容灾的解决方案。在推送配置时，采用了较流行的推和拉两种模式来实现。并且把配置中心中推送轨迹的功能也加入了进来。</p><h1 id="配置中心作用"><a href="#配置中心作用" class="headerlink" title="配置中心作用"></a>配置中心作用</h1><h2 id="动态加载配置"><a href="#动态加载配置" class="headerlink" title="动态加载配置"></a>动态加载配置</h2><p>？</p><h2 id="多环境配置"><a href="#多环境配置" class="headerlink" title="多环境配置"></a>多环境配置</h2><p>？</p><h2 id="微服务架构统一管理配置"><a href="#微服务架构统一管理配置" class="headerlink" title="微服务架构统一管理配置"></a>微服务架构统一管理配置</h2><p>？</p><h2 id="配置更新轨迹"><a href="#配置更新轨迹" class="headerlink" title="配置更新轨迹"></a>配置更新轨迹</h2><p>？</p><h1 id="当前市场上配置中心解决方案介绍"><a href="#当前市场上配置中心解决方案介绍" class="headerlink" title="当前市场上配置中心解决方案介绍"></a>当前市场上配置中心解决方案介绍</h1><h2 id="Spring-Cloud-Config"><a href="#Spring-Cloud-Config" class="headerlink" title="Spring Cloud Config"></a>Spring Cloud Config</h2><p>？</p><h2 id="Ctrip-Apollo"><a href="#Ctrip-Apollo" class="headerlink" title="Ctrip Apollo"></a>Ctrip Apollo</h2><p>？</p><h2 id="Alibaba-Nacos"><a href="#Alibaba-Nacos" class="headerlink" title="Alibaba Nacos"></a>Alibaba Nacos</h2><p>？</p><h2 id="阿里云-ACM服务"><a href="#阿里云-ACM服务" class="headerlink" title="阿里云-ACM服务"></a>阿里云-ACM服务</h2><p>？</p><h2 id="常用配置中心差异"><a href="#常用配置中心差异" class="headerlink" title="常用配置中心差异"></a>常用配置中心差异</h2><p>？</p><h1 id="配置中心技术解决方案分析"><a href="#配置中心技术解决方案分析" class="headerlink" title="配置中心技术解决方案分析"></a>配置中心技术解决方案分析</h1><p>想实现自定义配置中心，有哪些潜在问题呢？或者说从方面考虑呢？</p><ol><li>配置中心的数据如何接入</li><li>配置中心的存储如何落盘</li><li>配置中心的配置更新后如何动态推送</li><li>业务微服务读取配置的方式，如何支撑高并发读取</li><li>配置更新轨迹的实现</li><li>配置中心的监控，高并发下稳定的运行如何实现</li></ol><h2 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h2><h3 id="配置中心数据接入的解决方案"><a href="#配置中心数据接入的解决方案" class="headerlink" title="配置中心数据接入的解决方案"></a>配置中心数据接入的解决方案</h3><p>？</p><h3 id="配置中心的配置存储的解决方案"><a href="#配置中心的配置存储的解决方案" class="headerlink" title="配置中心的配置存储的解决方案"></a>配置中心的配置存储的解决方案</h3><p>？</p><h3 id="配置更新后的动态推送解决方案"><a href="#配置更新后的动态推送解决方案" class="headerlink" title="配置更新后的动态推送解决方案"></a>配置更新后的动态推送解决方案</h3><p>？</p><h3 id="业务微服务高并发读取配置的解决方案"><a href="#业务微服务高并发读取配置的解决方案" class="headerlink" title="业务微服务高并发读取配置的解决方案"></a>业务微服务高并发读取配置的解决方案</h3><p>？</p><h3 id="配置更新轨迹的解决方案"><a href="#配置更新轨迹的解决方案" class="headerlink" title="配置更新轨迹的解决方案"></a>配置更新轨迹的解决方案</h3><p>？</p><h3 id="配置中心运行监控的解决方案"><a href="#配置中心运行监控的解决方案" class="headerlink" title="配置中心运行监控的解决方案"></a>配置中心运行监控的解决方案</h3><p>？</p><h1 id="企业级应用配置管理平台（Tengbin-ACM）"><a href="#企业级应用配置管理平台（Tengbin-ACM）" class="headerlink" title="企业级应用配置管理平台（Tengbin_ACM）"></a>企业级应用配置管理平台（Tengbin_ACM）</h1><h2 id="系统架构"><a href="#系统架构" class="headerlink" title="系统架构"></a>系统架构</h2>]]></content>
+      
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>Drools规则引擎原理及实战（一）</title>
       <link href="/2023/07/07/Drools%E8%A7%84%E5%88%99%E5%BC%95%E6%93%8E%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E6%88%98%EF%BC%88%E4%B8%80%EF%BC%89/"/>
       <url>/2023/07/07/Drools%E8%A7%84%E5%88%99%E5%BC%95%E6%93%8E%E5%8E%9F%E7%90%86%E5%8F%8A%E5%AE%9E%E6%88%98%EF%BC%88%E4%B8%80%EF%BC%89/</url>
